@@ -4,6 +4,11 @@ using System.Collections;
 public class EnemyController : MonoBehaviour
 {
     [Header("슬라임 능력치")]
+    public float maxHp = 25f;
+    private float currentHp;
+    public float contactDamage = 5f;
+    public float attackDamage = 10f;
+
     public float dashForce = 7f;
     public float patternInterval = 5f;
 
@@ -19,14 +24,12 @@ public class EnemyController : MonoBehaviour
 
         originalScale = transform.localScale;
 
+        currentHp = maxHp;
+
         GameObject playerObj = GameObject.Find("Player");
         if(playerObj != null)
         {
             playerTransform = playerObj.transform;
-        }
-        else
-        {
-            Debug.LogError("플레이어 감지 오류");
         }
     }
 
@@ -53,6 +56,40 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    public void TakeDamage(float damage)
+    {
+        currentHp -= damage;
+        Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {currentHp}");
+
+        if(currentHp <= 0)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        Debug.Log("슬라임 사망!");
+
+        if(GameManager.Instance != null)
+        {
+            GameManager.Instance.AddKill();
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.CompareTag("Player"))
+        {
+            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+            if(player != null)
+            {
+                player.TakeDamage(contactDamage);
+            }
+        }
+    }
     void ExecuteRandomPattern()
     {
         if(playerTransform == null)
