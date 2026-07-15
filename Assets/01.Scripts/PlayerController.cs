@@ -2,41 +2,45 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IDamageable
 {
     [Header("플레이어 스탯")]
-    public float maxHp = 100f;
-    public float currentHp;
-    public float attackDamage = 10f;
+    [SerializeField] private float maxHp = 100f;
+    [SerializeField] private float attackDamage = 10f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float invincibilityDuration = 1.0f;
 
     [Header("공격 설정")]
-    public Transform attackPoint;
-    public float attackRange = 1f;
-    public LayerMask enemyLayers;
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRange = 1f;
+    [SerializeField] private LayerMask enemyLayers;
 
-    [SerializeField] float moveSpeed = 5f;
+    private float _currentHp;
+    private Rigidbody2D _rb;
+    private Collider2D _col;
+    private Animator _anim;
+    private PlayerInvisibility _invisibility;
 
-    private Rigidbody2D rb;
-    private Collider2D col;
-    private Animator anim;
+    private Vector2 _moveDir;
 
-    Vector2 moveDir;
-
+    public float CurrentHp => _currentHp;
+    public float MaxHp => maxHp;
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        col = GetComponent<Collider2D>();
-        anim = GetComponentInChildren<Animator>();
+        _rb = GetComponent<Rigidbody2D>();
+        _col = GetComponent<Collider2D>();
+        _anim = GetComponentInChildren<Animator>();
+        _invisibility = GetComponent<PlayerInvisibility>();
     }
 
     private void Start()
     {
-        currentHp = maxHp;
+        _currentHp = maxHp;
 
         if(UIManager.Instance != null)
         {
-            UIManager.Instance.UpdateHPBar(currentHp,maxHp);
+            UIManager.Instance.UpdateHPBar(_currentHp,maxHp);
         }
     }
 
@@ -44,11 +48,11 @@ public class PlayerController : MonoBehaviour
     {
         float moveX = (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0);
         float moveY = (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0);
-        moveDir = new Vector2(moveX, moveY).normalized;
+        _moveDir = new Vector2(moveX, moveY).normalized;
 
-        if(anim != null )
+        if(_anim != null )
         {
-            anim.SetBool("isRun", moveDir.magnitude > 0);
+            _anim.SetBool("isRun", _moveDir.magnitude > 0);
         }
 
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
@@ -62,28 +66,26 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(AttackDelayRoutine());
         }
     }
+    private void FixedUpdate()
+    {
+        _rb.linearVelocity = _moveDir * moveSpeed;
+    }
 
     IEnumerator AttackDelayRoutine()
     {
-        if(anim != null)
+        if(_anim != null)
         {
-            anim.SetTrigger("doAttack");
+            _anim.SetTrigger("doAttack");
         }
 
         yield return new WaitForSeconds(0.2f);
-
         Attack();
-    }
-
-    private void FixedUpdate()
-    {
-        rb.linearVelocity = moveDir * moveSpeed;
     }
     void Attack()
     {
-        if(anim != null)
+        if(_anim != null)
         {
-            anim.SetTrigger("doAttack");
+            _anim.SetTrigger("doAttack");
         }
         Debug.Log("기본 공격");
 
@@ -91,27 +93,33 @@ public class PlayerController : MonoBehaviour
 
         foreach(Collider2D enemy in hitEnemies)
         {
-            EnemyController enemyScript = enemy.GetComponent<EnemyController>();
-            if(enemyScript != null)
+            IDamageable damageable = enemy.GetComponent<IDamageable>();
+            if(damageable != null)
             {
-                enemyScript.TakeDamage(attackDamage);
+                damageable.TakeDamage(attackDamage);
             }
         }
     }
 
     public void TakeDamage(float damage)
     {
-        currentHp -= damage;
-        Debug.Log($"플레이어가 {damage}의 데미지를 입었습니다! 남은 HP : {currentHp}");
+        if (_invisibility.IsInvincible) return;
+
+        _currentHp = Mathf.Max(0f, _currentHp - damage);
+        Debug.Log($"플레이어가 {damage}의 데미지를 입었습니다! 남은 HP : {_currentHp}");
 
         if(UIManager.Instance != null )
         {
-            UIManager.Instance.UpdateHPBar(currentHp, maxHp);
+            UIManager.Instance.UpdateHPBar(_currentHp, maxHp);
         }
 
-        if(currentHp < 0)
+        if(_currentHp <= 0)
         {
             Die();
+        }
+        else
+        {
+            _invisibility.TriggerInvincibility(invincibilityDuration);
         }
     }
 

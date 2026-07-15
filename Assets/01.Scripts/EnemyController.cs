@@ -1,121 +1,122 @@
 using UnityEngine;
 using System.Collections;
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour, IDamageable
 {
-    [Header("슬라임 능력치")]
-    public float maxHp = 25f;
-    private float currentHp;
-    public float contactDamage = 5f;
-    public float attackDamage = 10f;
+    [Header("능력치")]
+    [SerializeField] private float maxHp = 25f;
+    [SerializeField] private float contactDamage = 5f;
+    [SerializeField] private float attackDamage = 10f;
+    [SerializeField] private float dashForce = 30f;
+    [SerializeField] private float patternInterval = 5f;
+    [SerializeField] private float deathFadeDuration = 0.5f;
 
-    public float dashForce = 7f;
-    public float patternInterval = 5f;
+    private EnemyHitFlash _hitFlash;
+    private EnemyFadeOut _fadeOut;
+    private Collider2D _enemyColider;
 
-    [Header("타격감 설정")]
-    public Material hitFlashMaterial;
-    private Material defaultMaterial;
-    private SpriteRenderer spriteRenderer;
-    private Coroutine flashCoroutine;
+    private float _currentHp;
+    private Rigidbody2D _rb;
+    private Transform _playerTransform;
+    private float _timer = 0f;
+    private Vector3 _originalScale;
+    private bool _isDead = false;
 
-    private Rigidbody2D rb;
-    private Transform playerTransform;
-    private float timer = 0f;
-
-    private Vector3 originalScale;
-
+    public float CurrentHp => _currentHp;
+    public float MaxHp => maxHp;
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if(spriteRenderer != null )
-        {
-            defaultMaterial = spriteRenderer.material;
-        }
+        _enemyColider = GetComponent<Collider2D>();
+        _hitFlash = GetComponent<EnemyHitFlash>();
+        _fadeOut = GetComponent<EnemyFadeOut>();
     }
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-
-        originalScale = transform.localScale;
-
-        currentHp = maxHp;
+        _rb = GetComponent<Rigidbody2D>();
+        _originalScale = transform.localScale;
+        _currentHp = maxHp;
 
         GameObject playerObj = GameObject.Find("Player");
         if(playerObj != null)
         {
-            playerTransform = playerObj.transform;
+            _playerTransform = playerObj.transform;
         }
     }
 
     void Update()
     {
-        if(playerTransform  != null)
+        if(_isDead) return;
+
+        HandleRotation();
+        HandlePatternTimer();
+    }
+
+    private void HandleRotation()
+    {
+        if(_playerTransform == null) return;
+
+        if(_playerTransform.position.x > transform.position.x)
         {
-            if(playerTransform.position.x > transform.position.x)
-            {
-                transform.localScale = new Vector3(-Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
-            }
-            else
-            {
-                transform.localScale = new Vector3(Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
-            }
+            transform.localScale = new Vector3(-Mathf.Abs(_originalScale.x), _originalScale.y, _originalScale.z);
         }
-
-        timer += Time.deltaTime;
-
-        if(timer >= patternInterval)
+        else
         {
-            ExecuteRandomPattern();
-            timer = 0f;
+            transform.localScale = new Vector3(Mathf.Abs(_originalScale.x),_originalScale.y, _originalScale.z);
         }
     }
 
+    private void HandlePatternTimer()
+    {
+        _timer += Time.deltaTime;
+        if(_timer >= patternInterval)
+        {
+            ExecuteRandomPattern();
+            _timer = 0f;
+        }
+    }
     public void TakeDamage(float damage)
     {
-        currentHp -= damage;
-        Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {currentHp}");
+        if (_isDead) return;
 
-        if(flashCoroutine != null)
-        {
-            StopCoroutine(flashCoroutine);
-        }
-        flashCoroutine = StartCoroutine(HitFlashRoutine());
+        _currentHp -= damage;
+        Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {_currentHp}");
 
-        if(currentHp <= 0)
+        if(_currentHp <= 0)
         {
             Die();
         }
-    }
-
-    IEnumerator HitFlashRoutine()
-    {
-        if(spriteRenderer == null || hitFlashMaterial == null)
+        else
         {
-            yield break;
+            _hitFlash.PlayFlash();
         }
-        spriteRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.3f);
-        spriteRenderer.color = Color.white;
     }
 
     void Die()
     {
-        Debug.Log("슬라임 사망!");
+        _isDead = true;
+        Debug.Log("몬스터 사망!");
 
         if(GameManager.Instance != null)
         {
             GameManager.Instance.AddKill();
         }
 
-        Destroy(gameObject);
+        if(_enemyColider != null)
+        {
+            _enemyColider.enabled = false;
+        }
+
+        _fadeOut.PlayFadeOut(deathFadeDuration, () => {Destroy(gameObject); });
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if(_isDead) return;
+            
         if(collision.gameObject.CompareTag("Player"))
         {
-            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+            IDamageable player = collision.gameObject.GetComponent<IDamageable>();
             if(player != null)
             {
                 player.TakeDamage(contactDamage);
@@ -124,10 +125,7 @@ public class EnemyController : MonoBehaviour
     }
     void ExecuteRandomPattern()
     {
-        if(playerTransform == null)
-        {
-            return;
-        }
+        if (_playerTransform == null) return;
 
         int randomPattern = Random.Range(0, 2);
 
@@ -143,22 +141,35 @@ public class EnemyController : MonoBehaviour
     void BodySlam()
     {
         Debug.Log("슬라임 패턴 : 몸통박치기! ");
-        rb.linearVelocity = Vector2.zero;
+        _rb.linearVelocity = Vector2.zero;
 
-        Vector2 directionToPlayer = (playerTransform.position - transform.position);
-        directionToPlayer.Normalize();
-        rb.AddForce(directionToPlayer * dashForce, ForceMode2D.Impulse);
+        Vector2 directionToPlayer = (_playerTransform.position - transform.position).normalized;
+        _rb.AddForce(directionToPlayer * dashForce, ForceMode2D.Impulse);
     }
 
     void Attack()
     {
         Debug.Log("슬라임 패턴 : 공격! ");
-        rb.linearVelocity = Vector2.zero;
+        _rb.linearVelocity = Vector2.zero;
 
         Transform weapon = transform.Find("weapon");
         if(weapon != null)
         {
             StartCoroutine(SwingWeaponRoutine(weapon));
+        }
+
+        Collider2D[] hitTargets = Physics2D.OverlapCircleAll(transform.position, 1.5f);
+
+        foreach(Collider2D target in hitTargets)
+        {
+            if (target.CompareTag("Player"))
+            {
+                IDamageable damageable = target.GetComponent<IDamageable>();
+                if(damageable != null)
+                {
+                    damageable.TakeDamage(attackDamage);
+                }
+            }
         }
     }
     
