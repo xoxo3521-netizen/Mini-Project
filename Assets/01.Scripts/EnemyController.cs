@@ -7,7 +7,7 @@ public class EnemyController : MonoBehaviour, IDamageable
     [SerializeField] private float maxHp = 25f;
     [SerializeField] private float contactDamage = 5f;
     [SerializeField] private float attackDamage = 10f;
-    [SerializeField] private float dashForce = 30f;
+    [SerializeField] private float dashForce = 225f;    /// Mass 55
     [SerializeField] private float patternInterval = 5f;
     [SerializeField] private float deathFadeDuration = 0.5f;
 
