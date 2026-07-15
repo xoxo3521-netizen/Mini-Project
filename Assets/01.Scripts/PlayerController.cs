@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
@@ -32,6 +33,11 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         currentHp = maxHp;
+
+        if(UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateHPBar(currentHp,maxHp);
+        }
     }
 
     private void Update()
@@ -53,8 +59,20 @@ public class PlayerController : MonoBehaviour
 
         if(Mouse.current.leftButton.wasPressedThisFrame)
         {
-            Attack();
+            StartCoroutine(AttackDelayRoutine());
         }
+    }
+
+    IEnumerator AttackDelayRoutine()
+    {
+        if(anim != null)
+        {
+            anim.SetTrigger("doAttack");
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        Attack();
     }
 
     private void FixedUpdate()
@@ -85,6 +103,11 @@ public class PlayerController : MonoBehaviour
     {
         currentHp -= damage;
         Debug.Log($"플레이어가 {damage}의 데미지를 입었습니다! 남은 HP : {currentHp}");
+
+        if(UIManager.Instance != null )
+        {
+            UIManager.Instance.UpdateHPBar(currentHp, maxHp);
+        }
 
         if(currentHp < 0)
         {

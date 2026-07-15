@@ -12,12 +12,27 @@ public class EnemyController : MonoBehaviour
     public float dashForce = 7f;
     public float patternInterval = 5f;
 
+    [Header("타격감 설정")]
+    public Material hitFlashMaterial;
+    private Material defaultMaterial;
+    private SpriteRenderer spriteRenderer;
+    private Coroutine flashCoroutine;
+
     private Rigidbody2D rb;
     private Transform playerTransform;
     private float timer = 0f;
 
     private Vector3 originalScale;
 
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if(spriteRenderer != null )
+        {
+            defaultMaterial = spriteRenderer.material;
+        }
+    }
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -61,10 +76,27 @@ public class EnemyController : MonoBehaviour
         currentHp -= damage;
         Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {currentHp}");
 
+        if(flashCoroutine != null)
+        {
+            StopCoroutine(flashCoroutine);
+        }
+        flashCoroutine = StartCoroutine(HitFlashRoutine());
+
         if(currentHp <= 0)
         {
             Die();
         }
+    }
+
+    IEnumerator HitFlashRoutine()
+    {
+        if(spriteRenderer == null || hitFlashMaterial == null)
+        {
+            yield break;
+        }
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.3f);
+        spriteRenderer.color = Color.white;
     }
 
     void Die()

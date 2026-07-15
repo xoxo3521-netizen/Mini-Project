@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance {  get; private set; }
 
     [Header("1층 미션 설정")]
-    public int targetKillCount = 10;
+    public int targetKillCount = 50;
     public int currentKillCount = 0;
 
     [Header("포탈 설정")]
@@ -28,6 +28,13 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    private void Start()
+    {
+        if(UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateMissionText(currentKillCount, targetKillCount);
+        }
+    }
 
     public void AddKill()
     {
@@ -38,6 +45,11 @@ public class GameManager : MonoBehaviour
 
         currentKillCount++;
         Debug.Log($"슬라임 처치! 현재 기록 : {currentKillCount} / {targetKillCount}");
+
+        if(UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateMissionText(currentKillCount ,targetKillCount);
+        }
 
         if(currentKillCount >= targetKillCount)
         {
