@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviour
 
     public void GoToNextFloor()
     {
-        Debug.Log("2층으로 이동합니다");
+        Debug.Log("다음층으로 이동합니다");
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
