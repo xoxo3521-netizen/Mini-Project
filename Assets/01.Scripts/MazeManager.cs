@@ -1,36 +1,42 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class MazeManager : MonoBehaviour
 {
+    public static MazeManager Instance { get; private set; }
+
     [Header("포탈 설정")]
     [SerializeField] private GameObject portalPrefab;
     [SerializeField] private List<Transform> portalSpawnPoints;
 
     [Header("UI")]
     [SerializeField] private TMP_Text missionText;
+    [SerializeField] private GameObject gameOverPanel;
 
     [Header("시작 위치")]
     [SerializeField] private Transform startPoint;
 
+
+    private void Awake()
+    {
+        if(Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
     void Start()
     {
         if(missionText != null )
         {
             missionText.text = "Complete the mission and go to the boss room on the 3rd floor.";
         }
-        GameObject player = GameObject.Find("Player");
-
-        if( player != null && startPoint != null)
-        {
-            player.transform.position = startPoint.position;
-        }
-        PlayerController playerController = player.GetComponent<PlayerController>();
-        if(playerController != null)
-        {
-            playerController.FindNewHpSlider();
-        }
+ 
         SpawnRandomPortal();
     }
 
@@ -47,5 +53,25 @@ public class MazeManager : MonoBehaviour
 
         GameObject portal = Instantiate(portalPrefab, targetPoint.position, Quaternion.identity);
         Debug.Log($"랜덤 포탈이 {targetPoint.name} 위치에 생성되었습니다.");
+    }
+
+    public void TriggerGameOver()
+    {
+        if(gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+        Time.timeScale = 0f;
+    }
+
+    public void RestartGame()
+    {
+        Time.timeScale = 1f;
+
+        if(PlayerController.Instance != null)
+        {
+            Destroy(PlayerController.Instance.gameObject);
+        }
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex-1);
     }
 }

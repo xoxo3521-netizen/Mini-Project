@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Portal : MonoBehaviour
 {
@@ -10,6 +11,11 @@ public class Portal : MonoBehaviour
             if(GameManager.Instance != null )
             {
                 GameManager.Instance.GoToNextFloor();
+            }
+            else
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                Debug.Log("다음 층으로 이동합니다.");
             }
         }
     }

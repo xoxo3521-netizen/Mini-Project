@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour, IDamageable
 {
@@ -32,8 +33,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     public float CurrentHp => _currentHp;
     public float MaxHp => maxHp;
 
-    private static PlayerController instance;
-    public static PlayerController Instance => instance;
+    public static PlayerController Instance { get; private set; }
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -41,13 +41,25 @@ public class PlayerController : MonoBehaviour, IDamageable
         _anim = GetComponentInChildren<Animator>();
         _invisibility = GetComponent<PlayerInvisibility>();
 
-        if(instance != null && instance != this)
+        if(Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        instance = this;
+        Instance = this;
+
         DontDestroyOnLoad(gameObject);
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDestroy()
+    {
+        if(Instance == this)
+        {
+            Instance = null;
+        }
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
@@ -59,12 +71,9 @@ public class PlayerController : MonoBehaviour, IDamageable
             UIManager.Instance.UpdateHPBar(_currentHp,maxHp);
         }
 
-        if(hpSlider ==  null)
-        {
-            FindNewHpSlider();
-        }
-        UpdateHpUI();
+        InitializeSceneObjects();
     }
+
 
     private void Update()
     {
@@ -96,7 +105,6 @@ public class PlayerController : MonoBehaviour, IDamageable
     IEnumerator AttackDelayRoutine()
     {
         isAttacking = true;
-        Debug.Log("공격 시작");
 
         if(_anim != null)
         {
@@ -106,7 +114,6 @@ public class PlayerController : MonoBehaviour, IDamageable
         yield return new WaitForSeconds(0.8f);
         Attack();
         isAttacking = false;
-        Debug.Log("공격 종료");
     }
     void Attack()
     {
@@ -148,7 +155,16 @@ public class PlayerController : MonoBehaviour, IDamageable
     void Die()
     {
         Debug.Log("플레이어가 사망하였습니다.");
-        gameObject.SetActive(false);
+
+        if(MazeManager.Instance != null )
+        {
+            MazeManager.Instance.TriggerGameOver();
+        }
+        else if(GameManager.Instance != null )
+        {
+            GameManager.Instance.GameOver();
+        }
+            Destroy(gameObject);
     }
 
     public void FindNewHpSlider()
@@ -175,4 +191,26 @@ public class PlayerController : MonoBehaviour, IDamageable
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
-}
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        InitializeSceneObjects();
+    }
+
+    private void InitializeSceneObjects()
+    {
+        GameObject startPointObj = GameObject.Find("StartPoint");
+        if(startPointObj != null )
+        {
+            transform.position = startPointObj.transform.position;
+        }
+
+        FindNewHpSlider();
+        UpdateHpUI();
+
+        if(GameManager.Instance != null && UIManager.Instance != null )
+        {
+            UIManager.Instance.UpdateMissionText(GameManager.Instance.currentKillCount, GameManager.Instance.targetKillCount);
+        }
+    }
+}   

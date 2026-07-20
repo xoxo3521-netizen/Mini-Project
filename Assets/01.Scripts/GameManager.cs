@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviour
     public GameObject portalPrefab;
     public Transform portalSpawnPoint;
 
+    [Header("UI 연결")]
+    [SerializeField] private GameObject gameOverPanel;
+
     private bool isMissionComplete = false;
 
     private void Awake()
@@ -21,11 +24,11 @@ public class GameManager : MonoBehaviour
         if(Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
     }
     private void Start()
@@ -79,5 +82,23 @@ public class GameManager : MonoBehaviour
         Debug.Log("다음층으로 이동합니다");
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    public void GameOver()
+    {
+        Debug.Log("Game Over");
+        if(gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
+    }
+    
+    public void RestartGame()
+    {
+        Time.timeScale = 1f;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

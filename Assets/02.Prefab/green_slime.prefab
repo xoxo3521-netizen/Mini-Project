@@ -326,8 +326,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   maxHp: 25
-  contactDamage: 5
-  attackDamage: 10
+  contactDamage: 15
+  attackDamage: 15
   dashForce: 225
   patternInterval: 5
   deathFadeDuration: 0.5
