@@ -325,9 +325,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd20fbb2010b706479004d3285deabeb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
-  maxHp: 25
-  contactDamage: 15
-  attackDamage: 15
+  maxHp: 10
+  contactDamage: 5
+  attackDamage: 10
   dashForce: 225
   patternInterval: 5
   deathFadeDuration: 0.5
@@ -441,7 +441,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 28fd0a34190aa4ad1989fb2ecf8ce578, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

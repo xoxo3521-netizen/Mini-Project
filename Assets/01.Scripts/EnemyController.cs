@@ -4,20 +4,20 @@ using System.Collections;
 public class EnemyController : MonoBehaviour, IDamageable
 {
     [Header("능력치")]
-    [SerializeField] private float maxHp = 25f;
-    [SerializeField] private float contactDamage = 5f;
-    [SerializeField] private float attackDamage = 10f;
-    [SerializeField] private float dashForce = 225f;    /// Mass 55
-    [SerializeField] private float patternInterval = 5f;
-    [SerializeField] private float deathFadeDuration = 0.5f;
+    [SerializeField] protected float maxHp = 25f;
+    [SerializeField] protected float contactDamage = 5f;
+    [SerializeField] protected float attackDamage = 10f;
+    [SerializeField] protected float dashForce = 225f;    /// Mass 55
+    [SerializeField] protected float patternInterval = 5f;
+    [SerializeField] protected float deathFadeDuration = 0.5f;
 
     private EnemyHitFlash _hitFlash;
     private EnemyFadeOut _fadeOut;
     private Collider2D _enemyColider;
 
-    private float _currentHp;
-    private Rigidbody2D _rb;
-    private Transform _playerTransform;
+    protected float _currentHp;
+    protected Rigidbody2D _rb;
+    protected Transform _playerTransform;
     private float _timer = 0f;
     private Vector3 _originalScale;
     private bool _isDead = false;
@@ -31,7 +31,7 @@ public class EnemyController : MonoBehaviour, IDamageable
         _hitFlash = GetComponent<EnemyHitFlash>();
         _fadeOut = GetComponent<EnemyFadeOut>();
     }
-    void Start()
+    protected virtual void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
         _originalScale = transform.localScale;
@@ -92,7 +92,7 @@ public class EnemyController : MonoBehaviour, IDamageable
         }
     }
 
-    void Die()
+    protected virtual void Die()
     {
         _isDead = true;
         Debug.Log("몬스터 사망!");

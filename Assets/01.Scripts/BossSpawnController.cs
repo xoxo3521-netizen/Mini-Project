@@ -49,5 +49,6 @@ public class BossSpawnController : MonoBehaviour
             Debug.Log("보스가 등장했습니다!");
         }
 
+        GameObject.Find("BossHPBar")?.SetActive(true);
     }
 }
