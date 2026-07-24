@@ -14,8 +14,8 @@ public class BossSpawnController : MonoBehaviour
     [SerializeField] private Vector3Int[] doorPositions;
    
     [Header("타이밍 설정")]
-    [SerializeField] private float inWait = 3f;
-    [SerializeField] private float doorOpenDelay = 3f;
+    [SerializeField] private float inWait = 5f;
+    [SerializeField] private float doorOpenDelay = 5f;
 
 
     private bool isFightStarted = false;

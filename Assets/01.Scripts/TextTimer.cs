@@ -5,7 +5,7 @@ using TMPro;
 
 public class TextTimer : MonoBehaviour
 {
-    private TMP_Text textComponet;
+    private TMP_Text textComponent;
 
     [Header("시간 설정")]
     [SerializeField] private float showDuration = 3f;
@@ -13,7 +13,7 @@ public class TextTimer : MonoBehaviour
 
     private void Awake()
     {
-        textComponet = GetComponent<TMP_Text>();
+        textComponent = GetComponent<TMP_Text>();
     }
 
     private void Start()
@@ -23,14 +23,14 @@ public class TextTimer : MonoBehaviour
 
     IEnumerator ToggleTextRoutine()
     {
-        textComponet.enabled = true;
+        textComponent.enabled = true;
 
         while(true)
         {
             yield return new WaitForSeconds(hideDuration);
-            textComponet.enabled = true;
+            textComponent.enabled = true;
             yield return new WaitForSeconds(showDuration);
-            textComponet.enabled = false;
+            textComponent.enabled = false;
         }
     }
 }

@@ -282,12 +282,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7912376629625427010}
-  - component: {fileID: -3887898061401645395}
   - component: {fileID: -1399308281184047367}
   - component: {fileID: -5929833664503035013}
   - component: {fileID: 8094589231121609946}
   - component: {fileID: 181454174621422023}
   - component: {fileID: -5866908007442486678}
+  - component: {fileID: 2566244094660054373}
   m_Layer: 7
   m_Name: green_slime
   m_TagString: Untagged
@@ -313,24 +313,6 @@ Transform:
   - {fileID: 8593550299157730824}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-3887898061401645395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9009012672970509345}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cd20fbb2010b706479004d3285deabeb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
-  maxHp: 10
-  contactDamage: 5
-  attackDamage: 10
-  dashForce: 225
-  patternInterval: 5
-  deathFadeDuration: 0.5
 --- !u!50 &-1399308281184047367
 Rigidbody2D:
   serializedVersion: 5
@@ -477,3 +459,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a45d830292c6116478c81fde1b2423c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHitFlash
+--- !u!114 &2566244094660054373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9009012672970509345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd20fbb2010b706479004d3285deabeb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyController
+  maxHp: 25
+  contactDamage: 5
+  attackDamage: 10
+  dashForce: 225
+  patternInterval: 5
+  deathFadeDuration: 0.5
+  hardHpMultiplier: 2
+  hardDamageMultiplier: 1.5

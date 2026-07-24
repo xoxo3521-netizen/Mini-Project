@@ -7,9 +7,13 @@ public class EnemyController : MonoBehaviour, IDamageable
     [SerializeField] protected float maxHp = 25f;
     [SerializeField] protected float contactDamage = 5f;
     [SerializeField] protected float attackDamage = 10f;
-    [SerializeField] protected float dashForce = 225f;    /// Mass 55
+    [SerializeField] protected float dashForce = 225f;
     [SerializeField] protected float patternInterval = 5f;
     [SerializeField] protected float deathFadeDuration = 0.5f;
+
+    [Header("하드모드 보정 계수")]
+    [SerializeField] private float hardHpMultiplier = 2f;
+    [SerializeField] private float hardDamageMultiplier = 1.5f;
 
     private EnemyHitFlash _hitFlash;
     private EnemyFadeOut _fadeOut;
@@ -31,14 +35,23 @@ public class EnemyController : MonoBehaviour, IDamageable
         _hitFlash = GetComponent<EnemyHitFlash>();
         _fadeOut = GetComponent<EnemyFadeOut>();
     }
+
     protected virtual void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
         _originalScale = transform.localScale;
+
+        if (GameData.Instance != null && GameData.Instance.selectedMode == GameMode.Hard)
+        {
+            maxHp *= hardHpMultiplier;
+            contactDamage *= hardDamageMultiplier;
+            attackDamage *= hardDamageMultiplier;
+        }
+
         _currentHp = maxHp;
 
         GameObject playerObj = GameObject.Find("Player");
-        if(playerObj != null)
+        if (playerObj != null)
         {
             _playerTransform = playerObj.transform;
         }
@@ -46,7 +59,7 @@ public class EnemyController : MonoBehaviour, IDamageable
 
     void Update()
     {
-        if(_isDead) return;
+        if (_isDead) return;
 
         HandleRotation();
         HandlePatternTimer();
@@ -54,35 +67,44 @@ public class EnemyController : MonoBehaviour, IDamageable
 
     private void HandleRotation()
     {
-        if(_playerTransform == null) return;
+        if (_playerTransform == null) return;
 
-        if(_playerTransform.position.x > transform.position.x)
+        if (_playerTransform.position.x > transform.position.x)
         {
             transform.localScale = new Vector3(-Mathf.Abs(_originalScale.x), _originalScale.y, _originalScale.z);
         }
         else
         {
-            transform.localScale = new Vector3(Mathf.Abs(_originalScale.x),_originalScale.y, _originalScale.z);
+            transform.localScale = new Vector3(Mathf.Abs(_originalScale.x), _originalScale.y, _originalScale.z);
         }
     }
 
     private void HandlePatternTimer()
     {
         _timer += Time.deltaTime;
-        if(_timer >= patternInterval)
+        if (_timer >= patternInterval)
         {
             ExecuteRandomPattern();
             _timer = 0f;
         }
     }
+
     public void TakeDamage(float damage)
     {
         if (_isDead) return;
 
         _currentHp -= damage;
-        Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {_currentHp}");
 
-        if(_currentHp <= 0)
+        if (this is BossController)
+        {
+            Debug.Log($"보스가 {damage}의 데미지를 입었습니다. 남은 HP : {_currentHp}");
+        }
+        else
+        {
+            Debug.Log($"슬라임이 {damage}의 데미지를 입었습니다. 남은 HP : {_currentHp}");
+        }
+
+        if (_currentHp <= 0)
         {
             Die();
         }
@@ -97,43 +119,46 @@ public class EnemyController : MonoBehaviour, IDamageable
         _isDead = true;
         Debug.Log("몬스터 사망!");
 
-        if(GameManager.Instance != null)
+        if (GameManager.Instance != null)
         {
             GameManager.Instance.AddKill();
         }
 
-        if(_enemyColider != null)
+        if (_enemyColider != null)
         {
             _enemyColider.enabled = false;
         }
 
-        _fadeOut.PlayFadeOut(deathFadeDuration, () => {Destroy(gameObject); });
+        _fadeOut.PlayFadeOut(deathFadeDuration, () => { Destroy(gameObject); });
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(_isDead) return;
-            
-        if(collision.gameObject.CompareTag("Player"))
+        if (_isDead) return;
+
+        if (collision.gameObject.CompareTag("Player"))
         {
             IDamageable player = collision.gameObject.GetComponent<IDamageable>();
-            if(player != null)
+            if (player != null)
             {
                 player.TakeDamage(contactDamage);
             }
         }
     }
+
     void ExecuteRandomPattern()
     {
         if (_playerTransform == null) return;
 
         int randomPattern = Random.Range(0, 2);
 
-        switch(randomPattern)
+        switch (randomPattern)
         {
-            case 0: BodySlam();
+            case 0:
+                BodySlam();
                 break;
-            case 1: Attack();
+            case 1:
+                Attack();
                 break;
         }
     }
@@ -153,26 +178,26 @@ public class EnemyController : MonoBehaviour, IDamageable
         _rb.linearVelocity = Vector2.zero;
 
         Transform weapon = transform.Find("weapon");
-        if(weapon != null)
+        if (weapon != null)
         {
             StartCoroutine(SwingWeaponRoutine(weapon));
         }
 
         Collider2D[] hitTargets = Physics2D.OverlapCircleAll(transform.position, 1.5f);
 
-        foreach(Collider2D target in hitTargets)
+        foreach (Collider2D target in hitTargets)
         {
             if (target.CompareTag("Player"))
             {
                 IDamageable damageable = target.GetComponent<IDamageable>();
-                if(damageable != null)
+                if (damageable != null)
                 {
                     damageable.TakeDamage(attackDamage);
                 }
             }
         }
     }
-    
+
     IEnumerator SwingWeaponRoutine(Transform weaponTransform)
     {
         float duration = 0.5f;
@@ -181,20 +206,20 @@ public class EnemyController : MonoBehaviour, IDamageable
         Quaternion startRot = weaponTransform.localRotation;
         Quaternion targetRot = startRot * Quaternion.Euler(0, 0, -90f);
 
-        while(elapsed < duration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            weaponTransform.localRotation = Quaternion.Slerp(startRot,targetRot,elapsed / duration);
+            weaponTransform.localRotation = Quaternion.Slerp(startRot, targetRot, elapsed / duration);
             yield return null;
         }
 
         yield return new WaitForSeconds(0.3f);
 
         elapsed = 0f;
-        while(elapsed < duration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            weaponTransform.localRotation = Quaternion.Slerp(targetRot,startRot,elapsed / duration);
+            weaponTransform.localRotation = Quaternion.Slerp(targetRot, startRot, elapsed / duration);
             yield return null;
         }
     }

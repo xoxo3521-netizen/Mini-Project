@@ -1,2 +1,17 @@
 fileFormatVersion: 2
 guid: 73adfe81cf469624ebe9f4221daf689a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - portalPrefab: {instanceID: 0}
+  - portalSpawnPoint: {instanceID: 0}
+  - gameOverPanel: {instanceID: 0}
+  - gameOverSound: {instanceID: 0}
+  - respawnCountSound: {instanceID: 0}
+  - playerObject: {fileID: 5597064205731612247, guid: 58ab722e76607404f85c103697cb24e1, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

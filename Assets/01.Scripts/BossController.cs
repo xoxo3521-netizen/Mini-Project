@@ -3,20 +3,27 @@ using System.Collections;
 
 public class BossController : EnemyController
 {
-    [Header("보스 고유 설정")]
-    [SerializeField] private float bossMaxHp = 100f;
-    [SerializeField] private float bossContactDamage = 20f;
+    [Header("보스 고유 설정 (노말 기준)")]
+    [SerializeField] private float bossMaxHp = 200f;
+    [SerializeField] private float bossContactDamage = 15f;
     [SerializeField] private float bossAttackDamage = 25f;
-    [SerializeField] private float bossDashForce = 500f;
+    [SerializeField] private float bossDashForce = 400f;
+
+    [Header("하드모드 보스 보정 계수")]
+    [SerializeField] private float bossHardHpMultiplier = 1.6f;
+    [SerializeField] private float bossHardDamageMultiplier = 1.3f;
 
     [Header("공격 범위 및 스킬 설정")]
-    [SerializeField] private float attackRange = 10f;
+    [SerializeField] private float attackRange = 6f;
     [SerializeField] private GameObject minionSlimePrefab;
     [SerializeField] private GameObject poisonFloorPrefab;
     [SerializeField] private GameObject jumpSmashFloorPrefab;
 
     [Header("스킬 쿨타임")]
-    [SerializeField] private float skillCooldown = 20f;
+    [SerializeField] private float skillCooldown = 15f;
+
+    [Header("보스 사운드 설정")]
+    [SerializeField] private AudioClip bossDeathSound;
 
     private Transform playerTransform;
     private bool hasSummonedMinions = false;
@@ -26,6 +33,15 @@ public class BossController : EnemyController
 
     protected override void Start()
     {
+        if (GameData.Instance != null && GameData.Instance.selectedMode == GameMode.Hard)
+        {
+            bossMaxHp *= bossHardHpMultiplier;
+            bossContactDamage *= bossHardDamageMultiplier;
+            bossAttackDamage *= bossHardDamageMultiplier;
+            bossDashForce *= 1.25f;
+            skillCooldown *= 0.75f;
+        }
+
         base.Start();
 
         maxHp = bossMaxHp;
@@ -50,6 +66,11 @@ public class BossController : EnemyController
             SpawnMinionSlime();
             hasSummonedMinions = true;
         }
+    }
+
+    public new void TakeDamage(float damage)
+    {
+        base.TakeDamage(damage);
     }
 
     private IEnumerator SkillRoutine()
@@ -111,7 +132,9 @@ public class BossController : EnemyController
         Debug.Log("보스 페이즈 전환: 체력 50% 이하! 부하 슬라임 소환!");
         if (minionSlimePrefab != null)
         {
-            for (int i = 0; i < 2; i++)
+            int spawnCount = (GameData.Instance != null && GameData.Instance.selectedMode == GameMode.Hard) ? 3 : 2;
+
+            for (int i = 0; i < spawnCount; i++)
             {
                 Vector2 spawnPos = (Vector2)transform.position + Random.insideUnitCircle * 2f;
                 Instantiate(minionSlimePrefab, spawnPos, Quaternion.identity);
@@ -122,12 +145,27 @@ public class BossController : EnemyController
     protected override void Die()
     {
         Debug.Log("보스가 처치되었습니다!");
+
+        AudioSource audioSource = GetComponent<AudioSource>();
+        if (bossDeathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(bossDeathSound);
+        }
+
+        GameManager gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.ShowGameClear();
+        }
+
         base.Die();
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Vector3 centerOffset = transform.position + new Vector3(0, 0f, 0);
+        Gizmos.DrawWireSphere(centerOffset, attackRange);
     }
 }
